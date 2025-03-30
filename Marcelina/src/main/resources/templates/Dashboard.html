@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="250x280" href="/images/logo.png">
+    <title>TaskXcel-Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px; /* Space for the fixed navbar */
+        }
+        .navbar {
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .btn-primary {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #667eea;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #5566cc;
+        }
+        .btn-danger {
+            border-radius: 8px;
+            padding: 5px 10px;
+        }
+        .table {
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .table th, .table td {
+            padding: 12px;
+            text-align: center;
+        }
+        .table thead {
+            background-color: #667eea;
+            color: white;
+        }
+        .table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .chart-container {
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">TaskXcel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" th:href="@{/logIn}" >Logout</a></li>
+                <li class="nav-item"><a class="nav-link"  th:href="@{/profile}" >Go to Profile</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+    <h2 class="mb-4">Dashboard</h2>
+    <div class="row">
+        <!-- Task Summary Cards -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">Total Tasks</div>
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${totalTasks ?: 0}">0</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">Completed Tasks</div>
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${completedTasks ?: 0}">0</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-header">Overdue Tasks</div>
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${overdueTasks ?: 0}">0</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task List Table -->
+    <div class="mt-4">
+        <h3>Task List</h3>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Due Date</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Assigned User ID</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="task : ${tasks}">
+                <td th:text="${task.id}"></td>
+                <td th:text="${task.title}"></td>
+                <td th:text="${task.description}"></td>
+                <td th:text="${task.dueDate != null ? task.dueDate : 'Null'}"></td>
+                <td th:text="${task.priority}"></td>
+                <td th:text="${task.status}"></td>
+                <td th:text="${task.userId}"></td>
+                <td>
+                    <form th:action="@{/dashboard/delete/{id}(id=${task.id})}" method="post">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <a th:href="@{/tasks/create}" class="btn btn-primary mt-3">
+        Create Task
+    </a>
+
+    <!-- Reports & Analytics Section -->
+    <div class="mt-4">
+        <h3>Reports & Analytics</h3>
+        <div class="chart-container">
+            <canvas id="taskChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('taskChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Total Tasks', 'Completed Tasks', 'Overdue Tasks'],
+                datasets: [{
+                    label: 'Task Summary',
+                    data: [
+                        [[${totalTasks ?: 0}]],
+                        [[${completedTasks ?: 0}]],
+                        [[${overdueTasks ?: 0}]]
+                    ],
+                    backgroundColor: [
+                        'rgba(37, 117, 252, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(255, 99, 132, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(37, 117, 252, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
